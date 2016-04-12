@@ -1,6 +1,6 @@
 {
   "name": "node-wxeasy",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "微信SDK",
   "main": "index.js",
   "dependencies": {
@@ -17,5 +17,13 @@
     "weixin"
   ],
   "author": "leipeng",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/leiroc/node-wxeasy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/leiroc/node-wxeasy/issues"
+  },
+  "homepage": "https://github.com/leiroc/node-wxeasy#readme"
 }
