@@ -16,24 +16,35 @@
 如果在使用过程中有任何疑问，可以发邮件给我，邮箱：121644750@qq.com
 
 ### 最简单的一个示例
+>注意 express 版本的升级
 
 ```
-'use strict';
-
 var express = require('express');
 var WXeasy = require('node-wxeasy');
+var bodyparser = require('body-parser')
 var app = express();
+
+
+//解析body
+app.use(bodyparser.json());
+app.use(bodyparser.urlencoded({
+    extended: true
+}));
+
+
 
 // 配置参数
 var weixin = new WXeasy({
     app: app,
-    appid: '你的appid（可选）',
-    appsecret: '你的secret（可选）',
-    token: '你的token',
-	access_token_apiurl: '你的其他服务器提供 access_token 接口（可选）'
+    appid: '',
+    appsecret: '',
+    token: 'appwechat',
+    access_token_apiurl: ''
 });
 
 weixin.on('textMsg', function(data) {
+	console.log(JSON.stringify(data));
+	
     var msg = {
         toUserName : data.fromUserName,
         fromUserName : data.toUserName,
@@ -42,7 +53,8 @@ weixin.on('textMsg', function(data) {
     };
 });
 
-app.listen(80);
+app.listen(18080);
+
 ```
 
 ### 安装node-wxeasy模块
