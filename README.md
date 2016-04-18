@@ -1,6 +1,10 @@
 ##一点说明: 
 > nodejs 微信公众号开发 api 扩展，集成大部分功能。
 
+##案例
+
+>[https://github.com/leiroc/node-wxeasy-example](https://github.com/leiroc/node-wxeasy-example) 上传example中文件到服务器 ，然后 npm install 成功
+
 #BUG and NEWS
 
 - 增加客户功能
