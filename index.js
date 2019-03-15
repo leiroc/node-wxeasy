@@ -55,6 +55,10 @@ var WXeasy = Events.extend({
                         console.log('++++++++++++status 400+++++++++');
                     } else {
                         json.xml['UriType'] = [uriType];
+                        /**
+                         * 2019-03-15 传递响应
+                         */
+                        json.xml['Resp'] = [res];
                         self.parse(json.xml);
                     }
                 });
@@ -215,7 +219,12 @@ var WXeasy = Events.extend({
             data.Event[0] == 'LOCATION' ||
             data.Event[0] == 'unsubscribe') {
 
-            this.res.send('');
+            // 默认使用传递响应
+            if (data.Resp && data.Resp[0]) {
+                data.Resp[0].send('');
+            } else {
+                this.res.send('');
+            }
         }
 
         var msg = {};
@@ -242,10 +251,18 @@ var WXeasy = Events.extend({
         var out = template[msgType](msg);
 
         try {
+            /**
+             * 2019-03-15
+             * 默认使用传递参数的响应
+             */
+            if (msg.resp) {
+                msg.resp.type('xml');
+                return msg.resp.send(out);
+            }
             self.res.type('xml');
             return self.res.send(out);
         } catch (e) {
-            console.log('+++++++' + e + '+++++++');
+            console.log(self.url, '+++' + e + '+++');
             return null;
         }
     },
