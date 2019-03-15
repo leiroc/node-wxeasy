@@ -205,10 +205,11 @@ var WXeasy = Events.extend({
     formatMsgContent: function (msg) {
         var content = msg.content;
 
-        content = content.replace(/\"|\%|~|&|\*|\^/gi, "")
-            .replace(/^\s+|\s+$/gi, "")
-
-        msg.content = content;
+        if (content) {
+            content = content + "";
+            msg.content = content.replace(/\"|\%|~|&|\*|\^/gi, "")
+                .replace(/^\s+|\s+$/gi, "");
+        }
         return msg;
     },
     // 接收普通消息
