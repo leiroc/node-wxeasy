@@ -197,7 +197,20 @@ var WXeasy = Events.extend({
                 break;
         }
     },
+    /**
+     * 格式化接收数据
+     * @param {* msg}
+     * return msg;
+     */
+    formatMsgContent: function (msg) {
+        var content = msg.content;
 
+        content = content.replace(/\"|\%|~|&|\*|\^/gi, "")
+            .replace(/^\s+|\s+$/gi, "")
+
+        msg.content = content;
+        return msg;
+    },
     // 接收普通消息
     // 1 文本消息 2 图片消息 3 语音消息 4 视频消息 5 小视频消息 6 地理位置消息 7 链接消息
     parseNormalMsg: function (data) {
@@ -205,6 +218,8 @@ var WXeasy = Events.extend({
         for (var i in data) {
             msg[i.slice(0, 1).toLowerCase() + i.slice(1)] = data[i][0];
         }
+        // 格式化数据
+        msg = this.formatMsgContent(msg);
         this.trigger('allMsg', msg);
         this.trigger(msg.msgType + 'Msg', msg);
     },
@@ -231,6 +246,8 @@ var WXeasy = Events.extend({
         for (var i in data) {
             msg[i.slice(0, 1).toLowerCase() + i.slice(1)] = data[i][0];
         }
+        // 格式化数据
+        msg = this.formatMsgContent(msg);
         this.trigger('allEventMsg', msg);
         this.trigger(msg.event + 'EventMsg', msg);
     },
