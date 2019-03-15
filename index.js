@@ -207,7 +207,7 @@ var WXeasy = Events.extend({
 
         if (content) {
             content = content + "";
-            msg.content = content.replace(/\"|\%|~|&|\*|\^/gi, "")
+            msg.content = content.replace(/\"|\%|~|&|\*|\^|\“|\”|\’|\‘|\!|\！/gi, "")
                 .replace(/^\s+|\s+$/gi, "");
         }
         return msg;
