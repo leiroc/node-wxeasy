@@ -55,7 +55,16 @@ module.exports = {
     GET_SHORT_URL: baseUrl + '/shorturl',
 
     //模板消息
-    POST_TEMPLATE_MESSAGE:  baseUrl + '/message/template/send'
+    POST_TEMPLATE_MESSAGE:  baseUrl + '/message/template/send',
+
+    //获取关注openid
+    GET_FOCUS_OPENID: baseUrl + '/user/get',
+
+    //获取关注用户信息 单个用户
+    GET_FOCUS_USERINFO: baseUrl + '/user/info',
+
+    //获得多个用户信息  100个
+    GET_FOCUS_LIST_USERINFO: baseUrl + '/user/info/batchget'
 
 
 

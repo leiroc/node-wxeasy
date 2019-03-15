@@ -10,7 +10,7 @@ var template = require('./template');
 
 var WXeasy = Events.extend({
 
-    init: function(config) {
+    init: function (config) {
         var self = this;
 
         this.config = config || {};
@@ -19,41 +19,42 @@ var WXeasy = Events.extend({
         this.appsecret = this.config.appsecret || '';
         this.token = this.config.token;
         this.API_URL = this.config.access_token_apiurl || '';
-
-        this.end_time = 0;
-        this.keep = false;
-
-        if (self.API_URL) {
-            setInterval(function () {
-                self.keep = false;
-            }, 300 * 1000);
-        }
+        this.url = this.config.url || '/verify';
 
         this.access_token = '';
-        this.start_access_token_time = 0;
+        // this.start_access_token_time = 0;
         this._init();
     },
 
-    _init: function() {
+    _init: function () {
         var self = this;
 
-        self.app.get('/verify', function(req, res) {
+        self.app.get(self.url, function (req, res) {
             self.checkSignature(req, res);
         });
 
-        self.app.post('/verify', function(req, res) {
+        self.app.post(self.url, function (req, res) {
+            /**
+             * add uriType by Ray 2018-03-30
+             * uriType 作为区分不同的来源
+             * @type {[string]}
+             */
+            var uriType = req.query.uriType;
+
             self.res = res;
             var buf = '';
             req.setEncoding('utf8');
-            req.on('data', function(chunk) {
+            req.on('data', function (chunk) {
                 buf += chunk;
             });
 
-            req.on('end', function() {
-                xml2js.parseString(buf, function(err, json) {
+            req.on('end', function () {
+                xml2js.parseString(buf, function (err, json) {
                     if (err) {
                         err.status = 400;
+                        console.log('++++++++++++status 400+++++++++');
                     } else {
+                        json.xml['UriType'] = [uriType];
                         self.parse(json.xml);
                     }
                 });
@@ -65,7 +66,7 @@ var WXeasy = Events.extend({
      * @method checkSignature
      * 验证消息真实性
      */
-    checkSignature: function(req, res) {
+    checkSignature: function (req, res) {
         var query = req.query;
         var signature = query.signature;
         var echostr = query.echostr;
@@ -85,33 +86,42 @@ var WXeasy = Events.extend({
         }
     },
 
-    r: function(err, resp, body, callback) {
+    r: function (err, resp, body, callback) {
         if (!err && resp.statusCode == 200) {
-            callback(JSON.parse(body));
+            try {
+                callback(JSON.parse(body));
+            } catch (e) {
+                var data = body.replace(/\u(\d+)/g, '');
+                try {
+                    callback(JSON.parse(data));
+                } catch (e) {
+                    callback(data);
+                }
+            }
         }
     },
 
-    getUrl: function(url, next) {
+    getUrl: function (url, next) {
         var self = this;
 
         self.getAccessToken(function (data) {
             self.access_token = data.access_token;
-            if (data.end_time) self.end_time = parseFloat(data.end_time);
+            // if (data.end_time) self.end_time = parseFloat(data.end_time);
             next && next(url + '?access_token=' + data.access_token);
         });
     },
 
     // get request
-    getRequest: function(url, callback) {
+    getRequest: function (url, callback) {
         var self = this;
-        request(url, function(err, resp, body) {
+        request(url, function (err, resp, body) {
             self.r(err, resp, body, callback);
         });
     },
 
     // post request
-    postRequest: function(url, body, callback) {
-        callback = callback || function() {
+    postRequest: function (url, body, callback) {
+        callback = callback || function () {
             console.log('postRequest default callback invoked');
         };
         var self = this;
@@ -120,9 +130,9 @@ var WXeasy = Events.extend({
             method: 'post',
             body: JSON.stringify(body)
         };
-        console.log('========== postRequest ==========');
-        console.log(options);
-        request(options, function(err, resp, body) {
+        // console.log('========== postRequest ==========');
+        // console.log(options);
+        request(options, function (err, resp, body) {
             self.r(err, resp, body, callback);
         });
     },
@@ -131,40 +141,20 @@ var WXeasy = Events.extend({
      * @method getAccessToken
      * 从微信服务器获取一个新的access_token
      */
-    getAccessToken: function(callback) {
+    getAccessToken: function (callback) {
         var self = this;
 
         if (self.API_URL) {
-            if ((self.end_time - new Date().getTime()) < 300*1000) {//超时重新获得
-                self.keep = false;
-
-                request(self.API_URL, function(err, resp, body) {
-                    if (err || resp.statusCode != 200) {
-                        //接口失败，直接走微信
-                        var url = config.GET_ACCESS_TOKEN + "?grant_type=client_credential&appid=" + self.appid + "&secret=" + self.appsecret;
-                        self.getRequest(url, callback);
-                    } else if (!err && resp.statusCode == 200) {
-                        callback(JSON.parse(body));
-                    }
-                });
-            } else {
-                if (self.keep) {
-                    callback && callback({access_token: self.access_token});
-                    return;
+            request(self.API_URL, function (err, resp, body) {
+                if (err || resp.statusCode != 200) {
+                    //接口失败，直接走微信
+                    var url = config.GET_ACCESS_TOKEN + "?grant_type=client_credential&appid=" + self.appid + "&secret=" + self.appsecret;
+                    self.getRequest(url, callback);
+                } else if (!err && resp.statusCode == 200) {
+                    callback(JSON.parse(body));
                 }
-                request(self.API_URL, function(err, resp, body) {
-                    if (!err && resp.statusCode == 200) {
-                        var d = JSON.parse(body);
+            });
 
-                        if (d.access_token == self.access_token) {
-                            self.keep = true;
-                        } else {
-                            self.access_token = d.access_token;
-                        }
-                        callback(d);
-                    }
-                });
-            }
         } else {
             //直接走微信
             var url = config.GET_ACCESS_TOKEN + "?grant_type=client_credential&appid=" + self.appid + "&secret=" + self.appsecret;
@@ -176,7 +166,7 @@ var WXeasy = Events.extend({
      * @method getWeixinIPList
      * 获取微信服务器IP地址
      */
-    getWeixinIPList: function(callback) {
+    getWeixinIPList: function (callback) {
         var self = this;
 
         self.getUrl(config.GET_WEIXIN_IP_LIST, function (url) {
@@ -184,7 +174,7 @@ var WXeasy = Events.extend({
         });
     },
 
-    parse: function(data) {
+    parse: function (data) {
         var msgType = data.MsgType[0] ? data.MsgType[0] : 'text';
         switch (msgType) {
             case 'text':
@@ -206,7 +196,7 @@ var WXeasy = Events.extend({
 
     // 接收普通消息
     // 1 文本消息 2 图片消息 3 语音消息 4 视频消息 5 小视频消息 6 地理位置消息 7 链接消息
-    parseNormalMsg: function(data) {
+    parseNormalMsg: function (data) {
         var msg = {};
         for (var i in data) {
             msg[i.slice(0, 1).toLowerCase() + i.slice(1)] = data[i][0];
@@ -218,7 +208,16 @@ var WXeasy = Events.extend({
     // 接收事件推送
     // 1 关注/取消关注事件 2 扫描带参数二维码事件 3 上报地理位置事件 4 自定义菜单事件 5 点击菜单拉取消息时的事件推送 6 点击菜单跳转链接时的事件推送
     // 1 subscribeEventMsg unsubscribeEventMsg 2 3 LOCATIONEventMsg
-    parseEventMsg: function(data) {
+    parseEventMsg: function (data) {
+        if (data.Event[0] == 'TEMPLATESENDJOBFINISH' ||
+            data.Event[0] == 'VIEW' ||
+            data.Event[0] == 'CLICK' ||
+            data.Event[0] == 'LOCATION' ||
+            data.Event[0] == 'unsubscribe') {
+
+            this.res.send('');
+        }
+
         var msg = {};
         for (var i in data) {
             msg[i.slice(0, 1).toLowerCase() + i.slice(1)] = data[i][0];
@@ -236,62 +235,67 @@ var WXeasy = Events.extend({
      *     获取自动回复规则
      ************************************************************/
     // 发送被动回复消息
-    sendMsg: function(msg) {
+    sendMsg: function (msg) {
         var self = this;
 
         var msgType = msg.msgType;
         var out = template[msgType](msg);
-        //console.log(out);
-        self.res.type('xml');
-        return self.res.send(out);
+
+        try {
+            self.res.type('xml');
+            return self.res.send(out);
+        } catch (e) {
+            console.log('+++++++' + e + '+++++++');
+            return null;
+        }
     },
 
-    sendTextMsg: function(msg) {
+    sendTextMsg: function (msg) {
         msg.msgType = 'text';
         return this.sendMsg(msg);
     },
 
-    sendImageMsg: function(msg) {
+    sendImageMsg: function (msg) {
         msg.msgType = 'image';
-        this.sendMsg(msg);
+        return this.sendMsg(msg);
     },
 
-    sendVoiceMsg: function(msg) {
+    sendVoiceMsg: function (msg) {
         msg.msgType = 'voice';
-        this.sendMsg(msg);
+        return this.sendMsg(msg);
     },
 
-    sendVideoMsg: function(msg) {
+    sendVideoMsg: function (msg) {
         msg.msgType = 'video';
-        this.sendMsg(msg);
+        return this.sendMsg(msg);
     },
 
-    sendMusicMsg: function(msg) {
+    sendMusicMsg: function (msg) {
         msg.msgType = 'music';
-        this.sendMsg(msg);
+        return this.sendMsg(msg);
     },
 
-    sendNewsMsg: function(msg) {
+    sendNewsMsg: function (msg) {
         msg.msgType = 'news';
-        this.sendMsg(msg);
+        return this.sendMsg(msg);
     },
 
     // 客服接口
     // 添加客服帐号
-    addKFAccount: function(data, callback) {
+    addKFAccount: function (data, callback) {
         var self = this;
 
-        self.getUrl(config.ADD_KFACCOUNT, function(url) {
-        	self.postRequest(url, data, callback);
+        self.getUrl(config.ADD_KFACCOUNT, function (url) {
+            self.postRequest(url, data, callback);
         });
     },
 
     // 获取所有客服账号
-    getKFList: function(callback) {
+    getKFList: function (callback) {
         var self = this;
 
-        self.getUrl(config.GET_KF_LIST, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.GET_KF_LIST, function (url) {
+            self.getRequest(url, callback);
         });
     },
     /**
@@ -299,9 +303,9 @@ var WXeasy = Events.extend({
      * @param msg
      * @param callback
      */
-    sendCustomMsg: function(msg, callback) {
+    sendCustomMsg: function (msg, callback) {
         var self = this;
-        callback = callback || function(data) {
+        callback = callback || function (data) {
             console.log('>>> sendCustomMsg >>> default callback function invoked.');
             console.log(data);
         };
@@ -312,7 +316,7 @@ var WXeasy = Events.extend({
                 method: 'post',
                 body: JSON.stringify(msg)
             };
-            request(options, function(err, resp, body) {
+            request(options, function (err, resp, body) {
                 self.r(err, resp, body, callback);
             });
         });
@@ -323,9 +327,9 @@ var WXeasy = Events.extend({
      * @param msg
      * @param callback
      */
-    sendTemplateMsg: function(msg, callback) {
+    sendTemplateMsg: function (msg, callback) {
         var self = this;
-        callback = callback || function(data) {
+        callback = callback || function (data) {
             console.log('>>> sendTemplateMsg >>> default callback function invoked.');
             console.log(data);
         };
@@ -337,7 +341,7 @@ var WXeasy = Events.extend({
                 body: JSON.stringify(msg)
             };
 
-            request(options, function(err, resp, body) {
+            request(options, function (err, resp, body) {
                 self.r(err, resp, body, callback);
             });
         });
@@ -347,11 +351,11 @@ var WXeasy = Events.extend({
      * @method getCurrentAutoReplyInfo
      * 获取自动回复规则
      */
-    getCurrentAutoReplyInfo: function(callback) {
+    getCurrentAutoReplyInfo: function (callback) {
         var self = this;
 
-        self.getUrl(config.GET_CURRENT_AUTOREPLY_INFO, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.GET_CURRENT_AUTOREPLY_INFO, function (url) {
+            self.getRequest(url, callback);
         });
     },
 
@@ -368,11 +372,11 @@ var WXeasy = Events.extend({
      * @method getMenu
      * 自定义菜单查询接口
      */
-    getMenu: function(callback) {
+    getMenu: function (callback) {
         var self = this;
 
-        self.getUrl(config.GET_MENU, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.GET_MENU, function (url) {
+            self.getRequest(url, callback);
         });
     },
 
@@ -380,11 +384,11 @@ var WXeasy = Events.extend({
      * @method deleteMenu
      * 自定义菜单删除接口
      */
-    deleteMenu: function(callback) {
+    deleteMenu: function (callback) {
         var self = this;
 
-        self.getUrl(config.DELETE_MENU, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.DELETE_MENU, function (url) {
+            self.getRequest(url, callback);
         });
     },
 
@@ -392,7 +396,7 @@ var WXeasy = Events.extend({
      * @method createMenu
      * 自定义菜单创建接口
      */
-    createMenu: function(menuObj, callback) {
+    createMenu: function (menuObj, callback) {
         var self = this;
 
         this.getUrl(config.CREATE_MENU, function (url) {
@@ -402,7 +406,7 @@ var WXeasy = Events.extend({
                 body: JSON.stringify(menuObj)
             };
 
-            request(options, function(err, resp, body) {
+            request(options, function (err, resp, body) {
                 self.r(err, resp, body, callback);
             });
         });
@@ -412,11 +416,11 @@ var WXeasy = Events.extend({
      * @method getCurrentSelfMenuInfo
      * 获取自定义菜单配置接口
      */
-    getCurrentSelfMenuInfo: function(callback) {
-    	var self = this;
+    getCurrentSelfMenuInfo: function (callback) {
+        var self = this;
 
-        self.getUrl(config.GET_CURRENT_SELF_MENU_INFO, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.GET_CURRENT_SELF_MENU_INFO, function (url) {
+            self.getRequest(url, callback);
         });
     },
 
@@ -429,22 +433,22 @@ var WXeasy = Events.extend({
      * @method getMaterialCount
      * 获取素材总数
      */
-    getMaterialCount: function(callback) {
+    getMaterialCount: function (callback) {
         var self = this;
 
-        self.getUrl(config.GET_MATERIAL_COUNT, function(url) {
-        	self.getRequest(url, callback);
+        self.getUrl(config.GET_MATERIAL_COUNT, function (url) {
+            self.getRequest(url, callback);
         });
     },
 
     /**
      * @method BATCH_GET_MATERIAL
      */
-    batchGetMaterial: function(data, callback) {
+    batchGetMaterial: function (data, callback) {
         var self = this;
 
-        self.getUrl(config.BATCH_GET_MATERIAL, function(url) {
-        	self.postRequest(url, data, callback);
+        self.getUrl(config.BATCH_GET_MATERIAL, function (url) {
+            self.postRequest(url, data, callback);
         });
 
     },
@@ -458,11 +462,11 @@ var WXeasy = Events.extend({
      * @method createQrcode
      * 创建二维码ticket
      */
-    createQrcode: function(data, callback) {
+    createQrcode: function (data, callback) {
         var self = this;
 
-        self.getUrl(config.CREATE_QRCODE, function(url) {
-        	self.postRequest(url, data, callback);
+        self.getUrl(config.CREATE_QRCODE, function (url) {
+            self.postRequest(url, data, callback);
         });
     },
 
@@ -470,11 +474,68 @@ var WXeasy = Events.extend({
      * @method getShortUrl
      * 长链接转短链接
      */
-    getShortUrl: function(data, callback) {
+    getShortUrl: function (data, callback) {
+            var self = this;
+
+            self.getUrl(config.GET_SHORT_URL, function (url) {
+                self.postRequest(url, data, callback);
+            });
+        }
+
+
+        /***************************************
+         * 微信用户信息
+         * *************************************
+         * */
+
+        ,
+    getFocusOpenid: function (nextid, callback) {
         var self = this;
 
-        self.getUrl(config.GET_SHORT_URL, function(url) {
-        	this.postRequest(url, data, callback);
+        if (!nextid || nextid == undefined) nextid = '';
+        self.getUrl(config.GET_FOCUS_OPENID, function (url) {
+            url += '&next_openid=' + nextid;
+            self.getRequest(url, callback);
+        });
+    },
+
+    /****************************************
+     * 获得单用户信息
+     * @param openid
+     * @param callback
+     ****************************************/
+
+    getFocusUserInfo: function (openid, callback) {
+        var self = this;
+
+        self.getUrl(config.GET_FOCUS_USERINFO, function (url) {
+            url += '&openid=' + openid + '&lang=zh_CN';
+            self.getRequest(url, callback);
+        });
+    },
+
+    /***************************************
+     * data:
+     * {"user_list": [
+            {
+               "openid": "otvxTs4dckWG7imySrJd6jSi0CWE",
+               "lang": "zh-CN"
+           },
+           {
+               "openid": "otvxTs_JZ6SEiP0imdhpi50fuSZg",
+               "lang": "zh-CN"
+           }
+       ]}
+     * 获得多个用户信息
+     * @param data
+     * @param callback
+     */
+
+    getFocusListUserInfo: function (data, callback) {
+        var self = this;
+
+        self.getUrl(config.GET_FOCUS_LIST_USERINFO, function (url) {
+            self.postRequest(url, data, callback);
         });
     }
 });

@@ -1,29 +1,101 @@
 {
-  "name": "node-wxeasy",
-  "version": "1.0.7",
-  "description": "微信SDK",
-  "main": "index.js",
+  "__npminstall_done": "Mon Mar 11 2019 14:40:23 GMT+0800 (GMT+08:00)",
+  "_args": [
+    [
+      "node-wxeasy",
+      "C:\\Users\\Administrator\\Desktop\\Git"
+    ],
+    [
+      {
+        "raw": "node-wxeasy@*",
+        "scope": null,
+        "escapedName": "node-wxeasy",
+        "name": "node-wxeasy",
+        "rawSpec": "*",
+        "spec": "*",
+        "type": "range"
+      },
+      "C:\\Users\\Administrator\\Desktop\\npm"
+    ]
+  ],
+  "_from": "node-wxeasy",
+  "_id": "node-wxeasy@1.3.0",
+  "_inBundle": false,
+  "_inCache": true,
+  "_installable": true,
+  "_integrity": "sha512-YmKjuJUErDDwC15pW282h8ugCUdScPMLOtv+mPOUFe6+e6gnMVxoJMac7U395mks46DTfDmvMhq7etDHS9+3+Q==",
+  "_location": "/node-wxeasy",
+  "_nodeVersion": "4.4.4",
+  "_npmOperationalInternal": {
+    "host": "s3://npm-registry-packages",
+    "tmp": "tmp/node-wxeasy-1.2.3.tgz_1502118584699_0.4815197763964534"
+  },
+  "_npmUser": {
+    "name": "leipeng",
+    "email": "121644750@qq.com"
+  },
+  "_npmVersion": "2.15.1",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "node-wxeasy",
+    "name": "node-wxeasy",
+    "escapedName": "node-wxeasy",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/node-wxeasy/-/node-wxeasy-1.3.0.tgz",
+  "_shasum": "6772bd0fa0f4ed0e435d2bae8cc74703dff7201e",
+  "_shrinkwrap": null,
+  "_spec": "node-wxeasy",
+  "_where": "E:\\github",
+  "author": {
+    "name": "leipeng"
+  },
+  "bugs": {
+    "url": "https://github.com/leiroc/node-wxeasy/issues"
+  },
+  "bundleDependencies": false,
   "dependencies": {
     "request": "^2.67.0",
     "sha1": "^1.1.1",
     "xml2js": "^0.4.16"
   },
+  "deprecated": false,
+  "description": "微信SDK",
   "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "directories": {},
+  "dist": {
+    "shasum": "ddb68428cfaa11f16609a723826d0dff2556a49f",
+    "tarball": "https://registry.npmjs.org/node-wxeasy/-/node-wxeasy-1.2.3.tgz"
   },
+  "homepage": "https://github.com/leiroc/node-wxeasy#readme",
   "keywords": [
     "node",
     "weixin"
   ],
-  "author": "leipeng",
   "license": "ISC",
+  "main": "index.js",
+  "maintainers": [
+    {
+      "name": "leipeng",
+      "email": "121644750@qq.com"
+    }
+  ],
+  "name": "node-wxeasy",
+  "optionalDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/leiroc/node-wxeasy.git"
   },
-  "bugs": {
-    "url": "https://github.com/leiroc/node-wxeasy/issues"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "homepage": "https://github.com/leiroc/node-wxeasy#readme"
+  "version": "1.3.0"
 }
