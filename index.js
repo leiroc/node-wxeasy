@@ -18,11 +18,10 @@ var WXeasy = Events.extend({
         this.appid = this.config.appid || '';
         this.appsecret = this.config.appsecret || '';
         this.token = this.config.token;
-        this.API_URL = this.config.access_token_apiurl || '';
-        this.url = this.config.url || '/verify';
-
-        this.access_token = '';
-        // this.start_access_token_time = 0;
+        this.API_URL = this.config.access_token_apiurl || ''; // 中控 token 接口
+        this.url = this.config.url || '/verify'; // 自定义公众号对接接口
+        this.access_token = ''; // 本地保存的临时 token
+        this.timer = null; // 计数器
         this._init();
     },
 
@@ -39,7 +38,9 @@ var WXeasy = Events.extend({
              * uriType 作为区分不同的来源
              * @type {[string]}
              */
-            var uriType = req.query.uriType;
+            var uriType = req.query.uriType || '';
+            // 挂载在实例对象上面 2020年5月8日
+            self.uriType = uriType;
 
             self.res = res;
             var buf = '';
@@ -108,9 +109,21 @@ var WXeasy = Events.extend({
     getUrl: function (url, next) {
         var self = this;
 
+        if (self.access_token) {
+            next && next(url + '?access_token=' + self.access_token);
+            return;
+        }
+
         self.getAccessToken(function (data) {
             self.access_token = data.access_token;
-            // if (data.end_time) self.end_time = parseFloat(data.end_time);
+            // 接近2小时候（7200s）清空token，重新获取token 2020年5月9号
+            if (self.access_token) {
+                clearTimeout(self.timer);
+                self.timer = setTimeout(() => {
+                    self.access_token = '';
+                }, 1000 * 7000);
+            }
+            
             next && next(url + '?access_token=' + data.access_token);
         });
     },
@@ -135,7 +148,7 @@ var WXeasy = Events.extend({
             body: JSON.stringify(body)
         };
         // console.log('========== postRequest ==========');
-        // console.log(options);
+ 
         request(options, function (err, resp, body) {
             self.r(err, resp, body, callback);
         });
@@ -149,7 +162,12 @@ var WXeasy = Events.extend({
         var self = this;
 
         if (self.API_URL) {
-            request(self.API_URL, function (err, resp, body) {
+            // 增加参数 2020年5月8日
+            let url = self.API_URL;
+            if (self.uriType) {
+                url = `${self.API_URL}?id=${self.uriType}`;
+            }
+            request(url, function (err, resp, body) {
                 if (err || resp.statusCode != 200) {
                     //接口失败，直接走微信
                     var url = config.GET_ACCESS_TOKEN + "?grant_type=client_credential&appid=" + self.appid + "&secret=" + self.appsecret;
@@ -280,7 +298,7 @@ var WXeasy = Events.extend({
             self.res.type('xml');
             return self.res.send(out);
         } catch (e) {
-            console.log(self.url, '+++' + e + '+++');
+            console.log(`${self.url}/?uriType=${self.uriType}`, '>>>sendMsg: ' + e);
             return null;
         }
     },
@@ -338,11 +356,18 @@ var WXeasy = Events.extend({
      * @param msg
      * @param callback
      */
-    sendCustomMsg: function (msg, callback) {
+    sendCustomMsg: function (msg, callback, noTry) {
         var self = this;
         callback = callback || function (data) {
-            console.log('>>> sendCustomMsg >>> default callback function invoked.');
-            console.log(data);
+            if (data.errcode != 0) {
+                console.log('>>> sendCustomMsg >>> default callback function invoked.', data);
+            }
+            // 错误信息处理 2020年5月8日；如果失效那么更新
+            if (data.errcode == 40001 && !noTry) {
+                self.access_token = '';
+                clearTimeout(self.timer);
+                self.sendCustomMsg(msg, callback, true)
+            }
         };
 
         self.getUrl(config.POST_CUSTOM_MESSAGE, function (url) {

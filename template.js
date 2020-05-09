@@ -7,6 +7,11 @@ function now() {
 module.exports = {
 
     text: function(msg) {
+        // 发送空字符串，或者 success
+        if (msg.content == 'success' || msg.content == '') {
+            return msg.content;
+        }
+        // 正常回复
         return '<xml>' +
             '<ToUserName><![CDATA[' + msg.toUserName + ']]></ToUserName>' +
             '<FromUserName><![CDATA[' + msg.fromUserName + ']]></FromUserName>' +

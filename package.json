@@ -1,5 +1,5 @@
 {
-  "__npminstall_done": "Mon Mar 11 2019 14:40:23 GMT+0800 (GMT+08:00)",
+  "__npminstall_done": "Sat May 09 2020 09:07:06 GMT+0800 (GMT+08:00)",
   "_args": [
     [
       "node-wxeasy",
@@ -18,12 +18,12 @@
       "C:\\Users\\Administrator\\Desktop\\npm"
     ]
   ],
-  "_from": "node-wxeasy",
-  "_id": "node-wxeasy@1.3.0",
+  "_from": "node-wxeasy@1.4.1",
+  "_id": "node-wxeasy@1.3.8",
   "_inBundle": false,
   "_inCache": true,
   "_installable": true,
-  "_integrity": "sha512-YmKjuJUErDDwC15pW282h8ugCUdScPMLOtv+mPOUFe6+e6gnMVxoJMac7U395mks46DTfDmvMhq7etDHS9+3+Q==",
+  "_integrity": "sha1-G6N9FxDSNiFzU/82VdcxYhdyzow=",
   "_location": "/node-wxeasy",
   "_nodeVersion": "4.4.4",
   "_npmOperationalInternal": {
@@ -50,11 +50,11 @@
     "#USER",
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/node-wxeasy/-/node-wxeasy-1.3.0.tgz",
-  "_shasum": "6772bd0fa0f4ed0e435d2bae8cc74703dff7201e",
+  "_resolved": "https://registry.npmjs.org/node-wxeasy/-/node-wxeasy-1.2.3.tgz",
+  "_shasum": "1ba37d1710d236217353ff3655d731621772ce8c",
   "_shrinkwrap": null,
   "_spec": "node-wxeasy",
-  "_where": "E:\\github",
+  "_where": "D:\\leipeng\\github",
   "author": {
     "name": "leipeng"
   },
@@ -97,5 +97,5 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "version": "1.3.7"
+  "version": "1.4.2"
 }
