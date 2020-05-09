@@ -298,7 +298,7 @@ var WXeasy = Events.extend({
             self.res.type('xml');
             return self.res.send(out);
         } catch (e) {
-            console.log(`${self.url}/?uriType=${self.uriType}`, '>>>sendMsg: ' + e);
+            console.log(`${self.url}/?uriType=${self.uriType}`, '>>> sendMsg: ' + e);
             return null;
         }
     },
@@ -360,7 +360,7 @@ var WXeasy = Events.extend({
         var self = this;
         callback = callback || function (data) {
             if (data.errcode != 0) {
-                console.log('>>> sendCustomMsg >>> default callback function invoked.', data);
+                console.log('>>> sendCustomMsg: ', msg, data);
             }
             // 错误信息处理 2020年5月8日；如果失效那么更新
             if (data.errcode == 40001 && !noTry) {
