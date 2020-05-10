@@ -298,7 +298,7 @@ var WXeasy = Events.extend({
             self.res.type('xml');
             return self.res.send(out);
         } catch (e) {
-            console.log(`${self.url}/?uriType=${self.uriType}`, '>>> sendMsg: ' + e);
+            console.log(`${self.url}/?uriType=${self.uriType}`, '>>> sendMsg: ' + e, msg);
             return null;
         }
     },
