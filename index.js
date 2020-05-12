@@ -387,7 +387,7 @@ var WXeasy = Events.extend({
             delete msg.uriType;
         }
         callback = callback || function (data) {
-            if (data.errcode != 0) {
+            if (data.errcode != 0 && data.errcode != 45015) {
                 console.log('>>> sendCustomMsg: ', msg, data);
             }
             // 错误信息处理 2020年5月8日；如果失效那么更新
