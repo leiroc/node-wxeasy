@@ -20,8 +20,8 @@ var WXeasy = Events.extend({
         this.token = this.config.token;
         this.API_URL = this.config.access_token_apiurl || ''; // 中控 token 接口
         this.url = this.config.url || '/verify'; // 自定义公众号对接接口
-        this.access_token = ''; // 本地保存的临时 token
-        this.timer = null; // 计数器
+        this.access_token = {}; // 本地保存的临时map 不同 uriType token
+        this.timer = {}; // 计数器
         this._init();
     },
 
@@ -106,26 +106,46 @@ var WXeasy = Events.extend({
         }
     },
 
-    getUrl: function (url, next) {
+    getUrl: function (url, next, uriType) {
         var self = this;
 
-        if (self.access_token) {
-            next && next(url + '?access_token=' + self.access_token);
-            return;
+        if (uriType) {
+            if (self.access_token[uriType]) {
+                next && next(url + '?access_token=' + self.access_token[uriType]);
+                return;
+            }
+        } else {
+            // let isEmpty = Object.keys(self.access_token).length === 0;
+            // 不是对象了且有值
+            if (typeof self.access_token != 'object' && self.access_token) {
+                next && next(url + '?access_token=' + self.access_token);
+                return;
+            }
         }
-
         self.getAccessToken(function (data) {
-            self.access_token = data.access_token;
-            // 接近2小时候（7200s）清空token，重新获取token 2020年5月9号
-            if (self.access_token) {
-                clearTimeout(self.timer);
-                self.timer = setTimeout(() => {
-                    self.access_token = '';
-                }, 1000 * 7000);
+            if (uriType) {
+                self.access_token[uriType] = data.access_token;
+                // 接近2小时候（7200s）清空token，重新获取token 2020年5月9号
+                if (self.access_token[uriType]) {
+                    clearTimeout(self.timer[uriType]);
+                    self.timer[uriType] = setTimeout(() => {
+                        self.access_token[uriType] = '';
+                    }, 1000 * 7000);
+                }
+                next && next(url + '?access_token=' + data.access_token);
+            } else {
+                self.access_token = data.access_token;
+                // 接近2小时候（7200s）清空token，重新获取token 2020年5月9号
+                if (self.access_token) {
+                    clearTimeout(self.timer);
+                    self.timer = setTimeout(() => {
+                        self.access_token = '';
+                    }, 1000 * 7000);
+                }
+                next && next(url + '?access_token=' + data.access_token);
             }
             
-            next && next(url + '?access_token=' + data.access_token);
-        });
+        }, uriType);
     },
 
     // get request
@@ -158,13 +178,16 @@ var WXeasy = Events.extend({
      * @method getAccessToken
      * 从微信服务器获取一个新的access_token
      */
-    getAccessToken: function (callback) {
+    getAccessToken: function (callback, uriType) {
         var self = this;
 
         if (self.API_URL) {
             // 增加参数 2020年5月8日
             let url = self.API_URL;
-            if (self.uriType) {
+
+            if (uriType) {
+                url = `${self.API_URL}?id=${uriType}`;
+            } else if (self.uriType) {
                 url = `${self.API_URL}?id=${self.uriType}`;
             }
             request(url, function (err, resp, body) {
@@ -358,14 +381,29 @@ var WXeasy = Events.extend({
      */
     sendCustomMsg: function (msg, callback, noTry) {
         var self = this;
+        let uriType = msg.uriType; // 参数
+
+        if (uriType) {
+            delete msg.uriType;
+        }
         callback = callback || function (data) {
             if (data.errcode != 0) {
                 console.log('>>> sendCustomMsg: ', msg, data);
             }
             // 错误信息处理 2020年5月8日；如果失效那么更新
             if (data.errcode == 40001 && !noTry) {
-                self.access_token = '';
-                clearTimeout(self.timer);
+                // 同一个实例
+                if (uriType) {
+                    self.access_token[uriType] = '';
+                    clearTimeout(self.timer[uriType]);
+                } else {
+                    self.access_token = '';
+                    clearTimeout(self.timer);
+                }
+
+                if (uriType) {
+                    msg.uriType = uriType;
+                }
                 self.sendCustomMsg(msg, callback, true)
             }
         };
@@ -379,7 +417,7 @@ var WXeasy = Events.extend({
             request(options, function (err, resp, body) {
                 self.r(err, resp, body, callback);
             });
-        });
+        }, uriType);
     },
 
     /**
